@@ -3,9 +3,15 @@ package common
 import (
 	"io/ioutil"
 	"log"
+	"net/http"
+	"time"
+
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
-// using asymmetric crypto/RSA keys
+//using asymmetric crypto/RSA keys
+//location of private/public key files
+
 const (
 	// openssl genrsa -out app.rsa 1024
 	privKeyPath = "keys/app.rsa"
@@ -33,4 +39,24 @@ func initKeys() {
 		log.Fatalf("[initKeys]:%s\n", err)
 		panic(errr)
 	}
+}
+
+//Generate JWT token
+func GenerateJWT(name, role string) (sting, error) {
+
+	//create a signer for rsa 256
+	t := jwt.New(jwt.GetSigningMethod("RS256"))
+	//set claims for JWT token
+	t.Claims["iss"] = "admin"
+	t.Claims["UserInfo"] = struct {
+		Name string
+		Role string
+	}{name, role}
+	//set the expire time for JWT token
+	t.Claims["exp"] = time.Now().Add(time.Minute * 20).Unix()
+	tokenString, err := t.SignedString(signKey)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }
